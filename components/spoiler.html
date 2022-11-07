@@ -1,0 +1,19 @@
+<config>
+    name: "Spoiler"
+    usage: "![Spoiler][Write your text here]!"
+    arguments: [ ["text", "string"] ]
+</config>
+
+<style>
+    .text {
+        color: black;
+    }
+
+    .text:hover {
+        color: red;
+    }
+</style>
+
+<main>
+    <p class="transition text">${text}</p>
+</main>

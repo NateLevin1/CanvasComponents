@@ -1,0 +1,29 @@
+{
+    "name": "canvas-components",
+    "version": "1.0.0",
+    "description": "Bookmarklet that adds special \"components\" to the Canvas LMS via CSS Injection.",
+    "main": "scripts/build.js",
+    "type": "module",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "node scripts/build.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/UltimatePro-Grammer/CanvasComponents.git"
+    },
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/UltimatePro-Grammer/CanvasComponents/issues"
+    },
+    "homepage": "https://github.com/UltimatePro-Grammer/CanvasComponents#readme",
+    "dependencies": {
+        "chalk": "^5.1.2",
+        "clean-css": "^5.3.1",
+        "glob": "^8.0.3",
+        "html-minifier": "^4.0.0",
+        "node-html-parser": "^6.1.1",
+        "uglify-js": "^3.17.4",
+        "yaml": "^2.1.3"
+    }
+}
