@@ -26,7 +26,9 @@ glob("components/*.html", async (err, files) => {
         throw new Error("Error creating components: " + e);
     }
 
-    const serializedComponents = components.map(JSON.stringify).join(",");
+    const serializedComponents = components
+        .map((item) => `"${item.name.toLowerCase()}": ` + JSON.stringify(item))
+        .join(",");
     console.log(chalk.cyan("Successfully built all components."));
 
     // create bookmarklet
@@ -46,9 +48,14 @@ glob("components/*.html", async (err, files) => {
 
     const minifiedJsStr = minifiedJs.code;
     const bookmarkletJs = createBookmarklet(minifiedJsStr);
+    const bookmarkletHtml = `<a href="${bookmarkletJs}" title="🍇 Canvas Components">🍇 Canvas Components</a><p>Drag the link to the left into your bookmarks bar.</p>`;
 
     await Promise.all([
         fs.writeFile(path.join(distDirectory, "bookmarklet"), bookmarkletJs),
+        fs.writeFile(
+            path.join(distDirectory, "bookmarklet.html"),
+            bookmarkletHtml
+        ),
         fs.writeFile(
             path.join(distDirectory, "canvascomponents.min.js"),
             minifiedJsStr
@@ -72,8 +79,15 @@ async function processComponent(filename) {
     const css = CSS.minify(root.querySelector("style").innerHTML);
     if (css.errors.length > 1) throw css.errors[0];
     const style = css.styles;
-    const main = HTMLMinifier.minify(root.querySelector("main").innerHTML, {
+    const originalHtml = root.querySelector("main").innerHTML;
+    // convert "transition" class to "thumbnail" class for canvas
+    const transformedHtml = originalHtml.replaceAll(
+        /class="(.*)transition(.*)"/g,
+        (_match, cg1, cg2) => `class="${cg1 ?? ""}thumbnail${cg2 ?? ""}"`
+    );
+    const main = HTMLMinifier.minify(transformedHtml, {
         collapseWhitespace: true,
+        removeComments: true,
     });
 
     return {
