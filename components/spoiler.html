@@ -5,15 +5,49 @@
 </config>
 
 <style>
-    .text {
-        color: black;
+    .spoiler {
+        display: inline-block;
+        padding: 0.05em 0.1em;
+        background-color: rgb(100, 100, 100);
+        color: rgb(100, 100, 100);
+        border-radius: 4px;
+        margin: 0;
+        position: relative;
     }
 
-    .text:hover {
-        color: red;
+    .spoiler:hover {
+        color: black;
+        background-color: rgba(100, 100, 100, 0.1);
+    }
+
+    code {
+        background-color: rgb(242, 247, 250);
+        display: inline-block;
+        padding: 0.01em 0.25em;
+    }
+
+    .spoiler:not(:hover) *:not(.reveal) {
+        background-color: rgb(100, 100, 100);
+        color: rgb(100, 100, 100);
+        border-color: rgb(100, 100, 100);
+    }
+
+    .reveal {
+        display: block;
+        color: rgba(255, 255, 255, 0.75);
+        position: absolute;
+        top: calc(50% - 0.7em);
+        left: calc(50% - 5.5ch);
+    }
+
+    .spoiler:hover>.reveal {
+        display: none;
     }
 </style>
 
 <main>
-    <p class="transition text">${text}</p>
+    <p class="spoiler transition">
+        <span class="reveal">Click to reveal</span>
+        ${text}
+    </p>
 </main>
