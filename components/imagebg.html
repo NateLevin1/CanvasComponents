@@ -1,0 +1,12 @@
+<config>
+    name: "ImageBG"
+    usage: "![ImageBG][Some text here][url]!"
+    arguments: [ ["text", "string"], ["url", "string"] ]
+</config>
+
+<style>
+</style>
+
+<main>
+    <p class="image-bg" style='background-image: url("${url}")'>${text}</p>
+</main>
