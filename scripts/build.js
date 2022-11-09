@@ -62,9 +62,7 @@ glob("components/*.html", async (err, files) => {
         ),
     ]);
 
-    console.log(
-        chalk.green("✓ Outputted bookmarklet to ./dist/bookmarklet.js!")
-    );
+    console.log(chalk.green("✓ Outputted bookmarklet to ./dist/bookmarklet!"));
 });
 
 /**
