@@ -74,10 +74,12 @@ async function processComponent(filename) {
     const root = HTML.parse(file);
 
     const config = YAML.parse(root.querySelector("config").innerHTML);
-    const css = CSS.minify(root.querySelector("style").innerHTML);
+    const css = CSS.minify(root.querySelector("style")?.innerHTML ?? "");
     if (css.errors.length > 1) throw css.errors[0];
-    // TODO: get JS?
     const style = css.styles;
+    const js = JS.minify(root.querySelector("script")?.innerHTML ?? "");
+    if (js.error) throw js.error;
+    const script = js.code;
     const originalHtml = root.querySelector("main").innerHTML;
     // convert "transition" class to "thumbnail" class for canvas
     const transformedHtml = originalHtml.replaceAll(
@@ -92,6 +94,7 @@ async function processComponent(filename) {
     return {
         ...config,
         style,
+        script,
         html: main,
     };
 }

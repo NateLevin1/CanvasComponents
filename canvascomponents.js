@@ -27,12 +27,12 @@ function onXhrRequest(json) {
             const lexed = lex(message);
             const parsed = parse(lexed);
             console.info("Parsed message as: ", parsed);
-            let cssManager = new CssManager();
-            const transpiledHtml = transpileStatements(parsed, cssManager);
+            let ccManager = new CodeConsolidationManager();
+            const transpiledHtml = transpileStatements(parsed, ccManager);
             const transpiledCss =
-                "<style>" + cssManager.getCssString() + "</style>";
+                "<style>" + ccManager.getCssString() + "</style>";
             const transpiledOutput = transpiledCss + transpiledHtml;
-            console.log(
+            console.info(
                 "%cOutput: " + transpiledOutput,
                 "color: gray; font-family: monospace; font-size: 0.75em;"
             );
@@ -62,13 +62,13 @@ function onXhrRequest(json) {
 /**
  * Transpile all statements into a single string
  * @param {object[]} statements
- * @param {CssManager} cssManager
+ * @param {CodeConsolidationManager} ccManager
  * @returns {string}
  */
-function transpileStatements(statements, cssManager) {
+function transpileStatements(statements, ccManager) {
     let result = "";
     for (const statement of statements) {
-        result += transpileOnce(statement, cssManager);
+        result += transpileOnce(statement, ccManager);
     }
     return result;
 }
@@ -76,10 +76,10 @@ function transpileStatements(statements, cssManager) {
 /**
  * Transpile a statement into a string
  * @param {object} statement
- * @param {CssManager} cssManager
+ * @param {CodeConsolidationManager} ccManager
  * @returns {string}
  */
-function transpileOnce(statement, cssManager) {
+function transpileOnce(statement, ccManager) {
     let result = "";
     const { type, value } = statement;
     switch (type) {
@@ -89,7 +89,7 @@ function transpileOnce(statement, cssManager) {
         }
         case "component": {
             const { name, args } = value;
-            cssManager.includeCss(name);
+            ccManager.includeFromName(name);
             const { usage, arguments: realArgs, html } = components[name];
             if (args.length !== realArgs.length)
                 throw new Error(
@@ -103,7 +103,7 @@ function transpileOnce(statement, cssManager) {
                 const argValue = args[i];
                 const transpiledArgValue = transpileStatements(
                     argValue,
-                    cssManager
+                    ccManager
                 );
                 argValues.push([argName, transpiledArgValue]);
                 htmlAfterVariableExpansion =
@@ -124,7 +124,6 @@ function transpileOnce(statement, cssManager) {
                 execs,
                 (_match, code) => {
                     const codeWithVariables = allVariablesStr + code;
-                    console.log(codeWithVariables);
                     return window.eval(codeWithVariables);
                 }
             );
@@ -136,19 +135,21 @@ function transpileOnce(statement, cssManager) {
     return result;
 }
 
-class CssManager {
+class CodeConsolidationManager {
     constructor() {
-        this._includedCss = new Set();
+        this._included = new Set();
         this._cssString = "";
     }
     /**
      * @param {string} name
      */
-    includeCss(name) {
+    includeFromName(name) {
         // include if not already included
-        if (!this._includedCss.has(name)) {
-            this._includedCss.add(name);
+        if (!this._included.has(name)) {
+            this._included.add(name);
             this._cssString += components[name].style;
+            // eval script, we do it in this manager so that it is only eval'ed once
+            new Function(components[name].script)();
         }
     }
     getCssString() {
@@ -412,4 +413,7 @@ function displayLoadedAnimation() {
     }, 1100);
 }
 
-console.log("%cLoaded CanvasComponents successfully!", "color: rebeccapurple;");
+console.info(
+    "%cLoaded CanvasComponents successfully!",
+    "color: rebeccapurple;"
+);
