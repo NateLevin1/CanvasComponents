@@ -96,6 +96,7 @@ function transpileOnce(statement, cssManager) {
                     `Expected ${realArgs.length} arguments but only found ${args.length} in the '${name}' component.\n\nExample usage: ${usage}`
                 );
             let htmlAfterVariableExpansion = html;
+            const argValues = [];
             for (var i = 0; i < realArgs.length; i++) {
                 // TODO: typechecking
                 const argName = realArgs[i][0];
@@ -104,12 +105,30 @@ function transpileOnce(statement, cssManager) {
                     argValue,
                     cssManager
                 );
+                argValues.push([argName, transpiledArgValue]);
                 htmlAfterVariableExpansion =
                     htmlAfterVariableExpansion.replaceAll(
                         "${" + argName + "}",
                         transpiledArgValue
                     );
             }
+
+            // expand exec statements
+            const execs = /\${eval:(.+)}/g;
+            const allVariablesStr = argValues.reduce(
+                (str, [argName, argVal]) =>
+                    `${str}\nconst ${argName} = ${JSON.stringify(argVal)};`,
+                ""
+            );
+            htmlAfterVariableExpansion = htmlAfterVariableExpansion.replaceAll(
+                execs,
+                (_match, code) => {
+                    const codeWithVariables = allVariablesStr + code;
+                    console.log(codeWithVariables);
+                    return window.eval(codeWithVariables);
+                }
+            );
+
             result += htmlAfterVariableExpansion;
             break;
         }

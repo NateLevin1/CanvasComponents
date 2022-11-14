@@ -76,6 +76,7 @@ async function processComponent(filename) {
     const config = YAML.parse(root.querySelector("config").innerHTML);
     const css = CSS.minify(root.querySelector("style").innerHTML);
     if (css.errors.length > 1) throw css.errors[0];
+    // TODO: get JS?
     const style = css.styles;
     const originalHtml = root.querySelector("main").innerHTML;
     // convert "transition" class to "thumbnail" class for canvas
