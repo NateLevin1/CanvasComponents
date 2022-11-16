@@ -9,16 +9,20 @@ let components = {
     /*${CANVAS_COMPONENTS}*/
 };
 
-const debug = false;
+const debug = !!window.CC_DEBUG;
+if (debug) {
+    console.info("%cDebug Enabled", "font-size: 1.5em; color: blue;");
+}
 
 /**
  * @param {object} json
  */
 function onXhrRequest(json) {
-    if (json.message) {
+    const message =
+        json?.message ?? json?.wiki_page?.body ?? json?.assignment?.description;
+    if (message) {
         try {
             // if an error occurs now, we don't want to send the request.
-            const { message } = json;
             console.info(
                 "CanvasComponents: Transforming request with the message: ",
                 message
@@ -40,7 +44,17 @@ function onXhrRequest(json) {
                 "%c\u2705 Successfully completed transpilation.",
                 "color: green; font-weight: bold;"
             );
-            json.message = transpiledOutput;
+
+            // update the output, in the correct location
+            if (json?.message) {
+                json.message = transpiledOutput;
+            }
+            if (json?.wiki_page?.body) {
+                json.wiki_page.body = transpiledOutput;
+            }
+            if (json?.assignment?.description) {
+                json.assignment.description = transpiledOutput;
+            }
 
             // we have made an update to the json, return it
             return json;
@@ -398,7 +412,16 @@ function debugHttpRequest(msg, arguments) {
             }
             data += "arg " + ind + ": " + str + "\n\n";
         }
-        alert(msg + ": " + data);
+        const outputStr = msg + ": " + data;
+        navigator.clipboard
+            .writeText(outputStr)
+            .then(() => {
+                alert(outputStr);
+            })
+            .catch(() => {
+                alert("Error: failed to write to clipboard.");
+                alert(outputStr);
+            });
     }
 }
 
