@@ -128,7 +128,7 @@ function transpileOnce(statement, ccManager) {
             }
 
             // expand exec statements
-            const execs = /\${eval:(.+)}/g;
+            const execs = /\${eval:(.+?)}/g;
             const allVariablesStr = argValues.reduce(
                 (str, [argName, argVal]) =>
                     `${str}\nconst ${argName} = ${JSON.stringify(argVal)};`,
