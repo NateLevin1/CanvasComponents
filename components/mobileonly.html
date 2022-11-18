@@ -1,0 +1,12 @@
+<config>
+    name: "MobileOnly"
+    usage: "![MobileOnly][This text will only show up on mobile.]!"
+    arguments: [ ["text", "string"] ]
+</config>
+
+<style>
+</style>
+
+<main>
+    <p class="hidden-desktop hidden-tablet">${text}</p>
+</main>
