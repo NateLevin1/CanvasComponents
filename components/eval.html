@@ -1,0 +1,12 @@
+<config>
+    name: "Eval"
+    usage: "![Eval][1+2+3]!"
+    arguments: [ ["javascript", "string"] ]
+</config>
+
+<style>
+</style>
+
+<main>
+    <p>${eval:window.eval(javascript)}</p>
+</main>

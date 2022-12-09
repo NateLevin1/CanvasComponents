@@ -1,0 +1,25 @@
+<config>
+    name: "Popup"
+    usage: "![Popup][Button Text][The popup's content goes here.]!"
+    arguments: [ ["buttonText", "string"], ["content", "string"] ]
+</config>
+
+<style>
+</style>
+
+<!-- 
+    NOTE: When using this component and others, Canvas will error to the console with:
+      > "Canvas is moving away from jQueryUI for our own widgets and this behavior will go away."
+      
+    That error logging was added 6 years ago (Sep 20, 2016) and these still work. It appears
+    that all of these components were re-implemented w/o jQuery for backwards compatibility.
+ -->
+
+<main>
+    <div id="${eval:buttonText.replaceAll(/\W/g, '-')}" class="enhanceable_content dialog">
+        ${content}
+    </div>
+    <p>
+        <a class="Button" href="#${eval:buttonText.replaceAll(/\W/g, '-')}">${buttonText}</a>
+    </p>
+</main>

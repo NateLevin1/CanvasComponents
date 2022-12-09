@@ -9,16 +9,20 @@ let components = {
     /*${CANVAS_COMPONENTS}*/
 };
 
-const debug = false;
+const debug = !!window.CC_DEBUG;
+if (debug) {
+    console.info("%cDebug Enabled", "font-size: 1.5em; color: blue;");
+}
 
 /**
  * @param {object} json
  */
 function onXhrRequest(json) {
-    if (json.message) {
+    const message =
+        json?.message ?? json?.wiki_page?.body ?? json?.assignment?.description;
+    if (message) {
         try {
             // if an error occurs now, we don't want to send the request.
-            const { message } = json;
             console.info(
                 "CanvasComponents: Transforming request with the message: ",
                 message
@@ -27,12 +31,12 @@ function onXhrRequest(json) {
             const lexed = lex(message);
             const parsed = parse(lexed);
             console.info("Parsed message as: ", parsed);
-            let cssManager = new CssManager();
-            const transpiledHtml = transpileStatements(parsed, cssManager);
+            let ccManager = new CodeConsolidationManager();
+            const transpiledHtml = transpileStatements(parsed, ccManager);
             const transpiledCss =
-                "<style>" + cssManager.getCssString() + "</style>";
+                "<style>" + ccManager.getCssString() + "</style>";
             const transpiledOutput = transpiledCss + transpiledHtml;
-            console.log(
+            console.info(
                 "%cOutput: " + transpiledOutput,
                 "color: gray; font-family: monospace; font-size: 0.75em;"
             );
@@ -40,7 +44,17 @@ function onXhrRequest(json) {
                 "%c\u2705 Successfully completed transpilation.",
                 "color: green; font-weight: bold;"
             );
-            json.message = transpiledOutput;
+
+            // update the output, in the correct location
+            if (json?.message) {
+                json.message = transpiledOutput;
+            }
+            if (json?.wiki_page?.body) {
+                json.wiki_page.body = transpiledOutput;
+            }
+            if (json?.assignment?.description) {
+                json.assignment.description = transpiledOutput;
+            }
 
             // we have made an update to the json, return it
             return json;
@@ -62,13 +76,13 @@ function onXhrRequest(json) {
 /**
  * Transpile all statements into a single string
  * @param {object[]} statements
- * @param {CssManager} cssManager
+ * @param {CodeConsolidationManager} ccManager
  * @returns {string}
  */
-function transpileStatements(statements, cssManager) {
+function transpileStatements(statements, ccManager) {
     let result = "";
     for (const statement of statements) {
-        result += transpileOnce(statement, cssManager);
+        result += transpileOnce(statement, ccManager);
     }
     return result;
 }
@@ -76,10 +90,10 @@ function transpileStatements(statements, cssManager) {
 /**
  * Transpile a statement into a string
  * @param {object} statement
- * @param {CssManager} cssManager
+ * @param {CodeConsolidationManager} ccManager
  * @returns {string}
  */
-function transpileOnce(statement, cssManager) {
+function transpileOnce(statement, ccManager) {
     let result = "";
     const { type, value } = statement;
     switch (type) {
@@ -89,27 +103,45 @@ function transpileOnce(statement, cssManager) {
         }
         case "component": {
             const { name, args } = value;
-            cssManager.includeCss(name);
+            ccManager.includeFromName(name);
             const { usage, arguments: realArgs, html } = components[name];
             if (args.length !== realArgs.length)
                 throw new Error(
                     `Expected ${realArgs.length} arguments but only found ${args.length} in the '${name}' component.\n\nExample usage: ${usage}`
                 );
             let htmlAfterVariableExpansion = html;
+            const argValues = [];
             for (var i = 0; i < realArgs.length; i++) {
                 // TODO: typechecking
                 const argName = realArgs[i][0];
                 const argValue = args[i];
                 const transpiledArgValue = transpileStatements(
                     argValue,
-                    cssManager
+                    ccManager
                 );
+                argValues.push([argName, transpiledArgValue]);
                 htmlAfterVariableExpansion =
                     htmlAfterVariableExpansion.replaceAll(
                         "${" + argName + "}",
                         transpiledArgValue
                     );
             }
+
+            // expand exec statements
+            const execs = /\${eval:(.+?)}/g;
+            const allVariablesStr = argValues.reduce(
+                (str, [argName, argVal]) =>
+                    `${str}\nconst ${argName} = ${JSON.stringify(argVal)};`,
+                ""
+            );
+            htmlAfterVariableExpansion = htmlAfterVariableExpansion.replaceAll(
+                execs,
+                (_match, code) => {
+                    const codeWithVariables = allVariablesStr + code;
+                    return window.eval(codeWithVariables);
+                }
+            );
+
             result += htmlAfterVariableExpansion;
             break;
         }
@@ -117,19 +149,21 @@ function transpileOnce(statement, cssManager) {
     return result;
 }
 
-class CssManager {
+class CodeConsolidationManager {
     constructor() {
-        this._includedCss = new Set();
+        this._included = new Set();
         this._cssString = "";
     }
     /**
      * @param {string} name
      */
-    includeCss(name) {
+    includeFromName(name) {
         // include if not already included
-        if (!this._includedCss.has(name)) {
-            this._includedCss.add(name);
+        if (!this._included.has(name)) {
+            this._included.add(name);
             this._cssString += components[name].style;
+            // eval script, we do it in this manager so that it is only eval'ed once
+            new Function(components[name].script)();
         }
     }
     getCssString() {
@@ -378,7 +412,16 @@ function debugHttpRequest(msg, arguments) {
             }
             data += "arg " + ind + ": " + str + "\n\n";
         }
-        alert(msg + ": " + data);
+        const outputStr = msg + ": " + data;
+        navigator.clipboard
+            .writeText(outputStr)
+            .then(() => {
+                alert(outputStr);
+            })
+            .catch(() => {
+                alert("Error: failed to write to clipboard.");
+                alert(outputStr);
+            });
     }
 }
 
@@ -393,4 +436,7 @@ function displayLoadedAnimation() {
     }, 1100);
 }
 
-console.log("%cLoaded CanvasComponents successfully!", "color: rebeccapurple;");
+console.info(
+    "%cLoaded CanvasComponents successfully!",
+    "color: rebeccapurple;"
+);
