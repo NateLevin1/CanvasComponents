@@ -101,5 +101,5 @@ async function processComponent(filename) {
  * @param {string} js
  */
 function createBookmarklet(js) {
-    return encodeURI("javascript:!function(){" + js + "}()");
+    return encodeURIComponent("javascript:!function(){" + js + "}()");
 }
